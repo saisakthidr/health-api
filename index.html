@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teen Health Tracker App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f6fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #fff;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        input, textarea, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .active {
+            display: block;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .doctor-card {
+            background: #e9f7fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: left;
+        }
+
+        .symptom-chip {
+            display: inline-block;
+            background: #e1f5fe;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+
+        #appointment-confirmation {
+            color: #27ae60;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            color: #27ae60;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Teen Health Tracker</h1>
+
+    <!-- Registration Section -->
+    <div id="auth-section" class="section active">
+        <h2>Register</h2>
+        <input type="text" id="reg-username" placeholder="Username">
+        <input type="password" id="reg-password" placeholder="Password">
+        <input type="email" id="reg-email" placeholder="Email">
+        <button onclick="register()">Register</button>
+        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+
+    <!-- Login Section -->
+    <div id="login-section" class="section">
+        <h2>Login</h2>
+        <input type="text" id="login-username" placeholder="Username">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+    </div>
+
+    <!-- Symptoms Checker Section -->
+    <div id="symptoms-section" class="section">
+        <h2>Symptom Checker</h2>
+        <textarea id="symptoms-input" placeholder="Describe your symptoms..." rows="4"></textarea>
+        <p>Common symptoms: fever, headache, cough, fatigue, etc.</p>
+        <button onclick="checkSymptoms()">Check Symptoms</button>
+        <div id="symptoms-result"></div>
+    </div>
+
+    <!-- Disease Result Section -->
+    <div id="disease-section" class="section">
+        <h2>Diagnosis Results</h2>
+        <div id="disease-result" class="result-card"></div>
+        <h3>Recommended Specialists</h3>
+        <div id="doctor-list"></div>
+        <button onclick="showAppointment()">Book Appointment</button>
+    </div>
+
+    <!-- Appointment Section -->
+    <div id="appointment-section" class="section">
+        <h2>Book an Appointment</h2>
+        <select id="doctor-select">
+            <!-- Will be populated dynamically -->
+        </select>
+        <input type="datetime-local" id="appointment-time">
+        <button onclick="bookAppointment()">Confirm Appointment</button>
+        <div id="appointment-confirmation"></div>
+    </div>
+</div>
+
+<script>
+    // Comprehensive disease database with symptoms
+    const diseases = {
+        "Common Cold": {
+            symptoms: ["runny nose", "cough", "sneezing", "sore throat", "headache", "fever"],
+            specialists: ["General Physician", "Family Doctor"]
+        },
+        "Influenza": {
+            symptoms: ["fever", "chills", "sore throat", "fatigue", "muscle aches", "cough"],
+            specialists: ["General Physician", "Infectious Disease Specialist"]
+        },
+        "Anxiety": {
+            symptoms: ["excessive worry", "restlessness", "difficulty concentrating", "panic", "social anxiety"],
+            specialists: ["Psychiatrist", "Psychologist", "Counselor"]
+        },
+        "Depression": {
+            symptoms: ["sadness", "fatigue", "loss of interest", "sleep problems", "difficulty concentrating"],
+            specialists: ["Psychiatrist", "Psychologist", "Mental Health Counselor"]
+        },
+        "Asthma": {
+            symptoms: ["wheezing", "shortness of breath", "chest tightness", "coughing", "difficulty breathing"],
+            specialists: ["Pulmonologist", "Allergist", "Respiratory Specialist"]
+        },
+        "ADHD": {
+            symptoms: ["difficulty focusing", "hyperactivity", "impulsiveness", "disorganization", "forgetfulness"],
+            specialists: ["Child Psychiatrist", "Behavioral Therapist", "Neurologist"]
+        },
+        "Eating Disorders": {
+            symptoms: ["weight changes", "food obsession", "body image issues", "irregular eating", "social isolation"],
+            specialists: ["Eating Disorder Specialist", "Nutritionist", "Psychiatrist"]
+        }
+    };
+
+    // Doctor database
+    const doctors = {
+        "General Physician": [
+            { name: "Dr. Sarah Smith", speciality: "General Medicine", experience: "15 years" },
+            { name: "Dr. James Wilson", speciality: "Family Medicine", experience: "12 years" }
+        ],
+        "Psychiatrist": [
+            { name: "Dr. Emily Brown", speciality: "Teen Psychiatry", experience: "10 years" },
+            { name: "Dr. Michael Chen", speciality: "Child & Teen Mental Health", experience: "8 years" }
+        ],
+        "Pulmonologist": [
+            { name: "Dr. Robert Johnson", speciality: "Respiratory Medicine", experience: "20 years" },
+            { name: "Dr. Lisa Anderson", speciality: "Pediatric Pulmonology", experience: "15 years" }
+        ]
+    };
+
+    function showLogin() {
+        document.getElementById('auth-section').classList.remove('active');
+        document.getElementById('login-section').classList.add('active');
+    }
+
+    function showRegister() {
+        document.getElementById('login-section').classList.remove('active');
+        document.getElementById('auth-section').classList.add('active');
+    }
+
+    function register() {
+        const username = document.getElementById('reg-username').value;
+        const password = document.getElementById('reg-password').value;
+        const email = document.getElementById('reg-email').value;
+
+        if (!username || !password || !email) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        // In a real app, you'd send this to a server
+        localStorage.setItem('user_' + username, JSON.stringify({
+            username,
+            password,
+            email
+        }));
+
+        alert('Registration successful! Please log in.');
+        showLogin();
+    }
+
+    function login() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        if (!username || !password) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        // In a real app, you'd verify with a server
+        const userData = localStorage.getItem('user_' + username);
+        if (userData) {
+            const user = JSON.parse(userData);
+            if (user.password === password) {
+                document.getElementById('login-section').classList.remove('active');
+                document.getElementById('symptoms-section').classList.add('active');
+            } else {
+                alert('Invalid password');
+            }
+        } else {
+            alert('User not found');
+        }
+    }
+
+    function checkSymptoms() {
+        const symptomsInput = document.getElementById('symptoms-input').value.toLowerCase();
+        let matchedDisease = null;
+        let highestMatchCount = 0;
+
+        // Find the disease with the most matching symptoms
+        for (let disease in diseases) {
+            const matchCount = diseases[disease].symptoms.filter(symptom => 
+                symptomsInput.includes(symptom)
+            ).length;
+
+            if (matchCount > highestMatchCount) {
+                highestMatchCount = matchCount;
+                matchedDisease = disease;
+            }
+        }
+
+        // Display results
+        const diseaseResult = document.getElementById('disease-result');
+        const doctorList = document.getElementById('doctor-list');
+        
+        if (matchedDisease && highestMatchCount > 0) {
+            // Show disease section
+            document.getElementById('symptoms-section').classList.remove('active');
+            document.getElementById('disease-section').classList.add('active');
+
+            // Display disease information
+            diseaseResult.innerHTML = `
+                <h3>${matchedDisease}</h3>
+                <p>Common symptoms:</p>
+                <div>${diseases[matchedDisease].symptoms.map(s => 
+                    `<span class="symptom-chip">${s}</span>`).join('')}
+                </div>
+            `;
+
+            // Display recommended doctors
+            doctorList.innerHTML = '';
+            diseases[matchedDisease].specialists.forEach(speciality => {
+                if (doctors[speciality]) {
+                    doctors[speciality].forEach(doctor => {
+                        doctorList.innerHTML += `
+                            <div class="doctor-card">
+                                <h4>${doctor.name}</h4>
+                                <p>${doctor.speciality}</p>
+                                <p>Experience: ${doctor.experience}</p>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        } else {
+            alert('No specific condition matched. Please consult a healthcare provider for accurate diagnosis.');
+        }
+    }
+
+    function showAppointment() {
+        document.getElementById('disease-section').classList.remove('active');
+        document.getElementById('appointment-section').classList.add('active');
+
+        // Populate doctor select
+        const doctorSelect = document.getElementById('doctor-select');
+        doctorSelect.innerHTML = '<option value="">Select a doctor</option>';
+        
+        for (let speciality in doctors) {
+            doctors[speciality].forEach(doctor => {
+                doctorSelect.innerHTML += `<option value="${doctor.name}">${doctor.name} - ${doctor.speciality}</option>`;
+            });
+        }
+    }
+
+    function bookAppointment() {
+        const doctor = document.getElementById('doctor-select').value;
+        const time = document.getElementById('appointment-time').value;
+
+        if (!doctor || !time) {
+            alert('Please select both doctor and appointment time');
+            return;
+        }
+
+        const confirmation = document.getElementById('appointment-confirmation');
+        confirmation.innerHTML = `
+            <div class="success-message">
+                Appointment confirmed!<br>
+                Doctor: ${doctor}<br>
+                Time: ${new Date(time).toLocaleString()}
+            </div>
+        `;
+    }
+</script>
+
+</body>
+</html>
